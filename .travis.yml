@@ -1,0 +1,35 @@
+sudo: required
+dist: trusty
+group: deprecated-2017Q4
+language: java
+jdk:
+  - oraclejdk8
+env:
+    global:
+      - secure: TL6keibiuAhjg8g0HekcUCqyKO0GDd49+4DdtMwlocWgEx4DsBknBGVMYKdN4dDuDfkedpur8fdc0Rdi6d3L+EUlhqRyCz3jb3NTTND6/E6Ovwu57KAyIaiTpLAnlQRHUxkrL1e2FXC7isPYfhmar/STBVKBZ18vEv5Hbi0KBnZH9TKHiacHSE2eNjQXIeICJ7MemF/6SA3MUrQj0XXhkKm+1xlaSlMwNeZuxeYlnBTUCKadl6y89W4eUC6OoDPdtYjnGRIcmRn0wzEWsvhs3zxh8M5g49eFcv1GPRJlq45p/fFY6KEcYEeGlFrut+QxA2rPA+foMNaPDxfWkdsGE9t/Zl73fiRvBp/q0xnhC0OxKsE6PhhJEJTpz8IRvxlrHo4LiO4PNbdB5Zjvwjg0Ts5EN1oAVNyZkr6npzWWy07/4oWY8+ixjJPcJr7EU8AXF2CTaIgqCq3xujUzRnMQlmhB7QD8FQD2uvgUKa1XnX3asApOKg9qSQqXEt35y98RH6uiqwcuKgrc3IP4kNSfV18o4Qy4MB4r4brTdg6BWVS0fLnQFbKpUNrgNhzO4/dBLV/GtdhdDR8q5B0BdgdsNg9ccPeBtoFLZ0lut5cL09GDdvvAAOYq85lxp4yVwvhBNsuWXZh4ZNdNKKy8xQH4FpJ5LS1BDSETSJfl9GI/gv4=
+      - secure: hWAjpTL0Ou0AXnM4Q1v2Y/LRB0/6EfrIkqA/XjoAmE7S2kAGoPGzi71SL+IKMggQfP+pGrEigijF1kZHmAz7IRL+Z+cXsS3IXiGO6zJid8QZx2I4D5A5fj4pU9ZMz9vdOKajRWPFW3J5XW7b2qaO4fyAzVBOJkT8ibef9scbB/RSbCpHg5kmvLWTjNUvEiPEuQA/qxecLC+1qlsMHVjDuQLTH/9DOfy3ZA1003I2PXg+ftmAMXPzoiQPcfALxKHDEyfiTXXDQ/udtsXvt1ZgxgZ0itzgo0r1G7TwigPCaB6UFhb6kncv3yJZFXA+H6drfqXMcdLpEX+Hx1ig4Lt42tMuMlYXzlLegyYjlAFx/bwySkHoKhqZRxVVnHuRAP5m/OgN1vw2Brz/L+mqsAdEcOBhEoJqewu6rTOcthUkBaB4R3Ly94qY1nBf7kIpOVpaF1R8cMNkuPEOW/jUa/OQSanyN/h5jzw1Zdta1C0uHBaAPDPRl33u6CgCZsQlrpsb4eWwPKP2yk4LE0yYsub9YViPPTJFLp5Mi5WOSXZje8BOfgMZjh/8z+gWUK0fxM5qNlQbPnI+6E6DJLJu/UUvQ5rxIa+wH4/vbc8D91OBwwFAP+hCd7tcL/mFpwAsa2/cai9xV59Gn5e/i8GHGA4rQxdTEChxa2kEbD7JWrAIt0o=
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+script:
+  - ./gradlew assemble
+  - ./gradlew check
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker build -t java .
+    pip install awscli
+    export PATH=$PATH:$HOME/.local/bin
+    $(aws ecr get-login --region us-east-2)
+    docker tag java:latest 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest
+    docker push 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest
+    JSON_CONTENT='{"containerDefinitions":[{"entryPoint":["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"],"portMappings":[{"hostPort":80,"protocol":"tcp","containerPort":8080}],"cpu":10,"environment":[],"mountPoints":[],"memory":128,"volumesFrom":[],"image":"439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest","essential":true,"name":"java"}],"family":"java","volumes":[],"placementConstraints":[]}'
+    JSON_FILE=test.json
+    echo $JSON_CONTENT > $JSON_FILE
+    aws ecs register-task-definition --region us-east-2 --family java --cli-input-json file://`pwd`/$JSON_FILE
+    TASK_REVISION=`aws ecs describe-task-definition --region us-east-2 --task-definition java | egrep "revision" | tr "/" " " | awk '{print $2}' | sed 's/"$//'`
+    echo $TASK_REVISION
+    aws ecs update-service --region us-east-2 --cluster java --service java --task-definition java:${TASK_REVISION} --desired-count 1
+    fi
