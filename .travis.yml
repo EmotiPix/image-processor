@@ -16,11 +16,11 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
 before_script:
- - chmod +x ./gradlew assemble check
+  - chmod +x gradlew
 script:
   - ./gradlew assemble check
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
-    docker build -t java .
+    ./gradlew docker
     pip install awscli
     export PATH=$PATH:$HOME/.local/bin
     $(aws ecr get-login --region us-east-2)
