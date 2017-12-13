@@ -7,13 +7,15 @@ buildscript {
 	}
 	dependencies {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-		classpath "gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.13.0"
 	}
 }
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
-apply plugin: 'com.palantir.docker'
+
+plugins {
+	id "com.palantir.docker" version "0.13.0"
+}
 
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
