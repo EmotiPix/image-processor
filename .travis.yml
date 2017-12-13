@@ -21,7 +21,7 @@ script:
   - ./gradlew assemble check
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
     ./gradlew docker;
-    pip install awscli;
+    pip install --user awscli;
     export PATH=$PATH:$HOME/.local/bin;
     $(aws ecr get-login --region us-east-2);
     docker tag java:latest 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest;
