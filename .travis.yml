@@ -31,4 +31,4 @@ script:
     TASK_REVISION=`aws ecs describe-task-definition --region us-east-2 --task-definition java | egrep "revision" | tr "/" " " | awk '{print $2}' | sed 's/"$//'`
     echo $TASK_REVISION
     aws ecs update-service --region us-east-2 --cluster java --service java --task-definition java:${TASK_REVISION} --desired-count 1
-    fi
+    fi;
