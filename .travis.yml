@@ -20,7 +20,7 @@ cache:
 script:
   - ./gradlew assemble check
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
-    docker build . -t java
+    docker build . -t java;
     pip install --user awscli;
     export PATH=$PATH:$HOME/.local/bin;
     $(aws ecr get-login --region us-east-2);
