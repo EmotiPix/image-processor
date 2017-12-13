@@ -18,17 +18,17 @@ cache:
 script:
   - ./gradlew assemble check
   - if [ "$TRAVIS_BRANCH" == "master" ]; then
-    ./gradlew docker
-    pip install awscli
-    export PATH=$PATH:$HOME/.local/bin
-    $(aws ecr get-login --region us-east-2)
-    docker tag java:latest 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest
-    docker push 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest
-    JSON_CONTENT='{"containerDefinitions":[{"entryPoint":["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"],"portMappings":[{"hostPort":80,"protocol":"tcp","containerPort":8080}],"cpu":10,"environment":[],"mountPoints":[],"memory":128,"volumesFrom":[],"image":"439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest","essential":true,"name":"java"}],"family":"java","volumes":[],"placementConstraints":[]}'
-    JSON_FILE=test.json
-    echo $JSON_CONTENT > $JSON_FILE
-    aws ecs register-task-definition --region us-east-2 --family java --cli-input-json file://`pwd`/$JSON_FILE
-    TASK_REVISION=`aws ecs describe-task-definition --region us-east-2 --task-definition java | egrep "revision" | tr "/" " " | awk '{print $2}' | sed 's/"$//'`
-    echo $TASK_REVISION
-    aws ecs update-service --region us-east-2 --cluster java --service java --task-definition java:${TASK_REVISION} --desired-count 1
+    ./gradlew docker;
+    pip install awscli;
+    export PATH=$PATH:$HOME/.local/bin;
+    $(aws ecr get-login --region us-east-2);
+    docker tag java:latest 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest;
+    docker push 439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest;
+    JSON_CONTENT='{"containerDefinitions":[{"entryPoint":["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"],"portMappings":[{"hostPort":80,"protocol":"tcp","containerPort":8080}],"cpu":10,"environment":[],"mountPoints":[],"memory":128,"volumesFrom":[],"image":"439810592139.dkr.ecr.us-east-2.amazonaws.com/java:latest","essential":true,"name":"java"}],"family":"java","volumes":[],"placementConstraints":[]}';
+    JSON_FILE=test.json;
+    echo $JSON_CONTENT > $JSON_FILE;
+    aws ecs register-task-definition --region us-east-2 --family java --cli-input-json file://`pwd`/$JSON_FILE;
+    TASK_REVISION=`aws ecs describe-task-definition --region us-east-2 --task-definition java | egrep "revision" | tr "/" " " | awk '{print $2}' | sed 's/"$//'`;
+    echo $TASK_REVISION;
+    aws ecs update-service --region us-east-2 --cluster java --service java --task-definition java:${TASK_REVISION} --desired-count 1;
     fi;
