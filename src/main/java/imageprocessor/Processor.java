@@ -12,7 +12,6 @@ import java.util.Base64;
 
 @Service
 class Processor {
-
     String process(String encodedImage, Emotion emotion) throws IOException {
         BufferedImage image = decode(encodedImage);
         applyEmotion(image, emotion);
